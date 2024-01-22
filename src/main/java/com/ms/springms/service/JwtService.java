@@ -22,7 +22,7 @@ public class JwtService {
     @Autowired
     private UserDetails userDetails;
 
-    private static final String SECRET = "23131313dwdedDADWW21";
+    private static final String SECRET = "23131313dwdddddddddddwa222222222222232131231dedDADWW21";
 
     public String generateToken(String username){
         Map<String , Objects> claims = new HashMap<>();
