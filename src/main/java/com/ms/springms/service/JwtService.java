@@ -10,10 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 @Component
@@ -22,16 +19,21 @@ public class JwtService {
     @Autowired
     private UserDetails userDetails;
 
+    private Set<String> tokenBlackList = new HashSet<>();
+
     private static final String SECRET = "23131313dwdddddddddddwa222222222222232131231dedDADWW21";
 
     public String generateToken(String username){
         Map<String , Objects> claims = new HashMap<>();
-      return Jwts.builder()
+      String token =  Jwts.builder()
                 .setClaims(claims)
                 .setSubject(username)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 ))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
+
+      tokenBlackList.add(token);
+      return token;
     }
 
     private Key getSignKey(){
@@ -65,7 +67,22 @@ public class JwtService {
 
     public Boolean validateToken(String token , UserDetails userDetails){
         final String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        return !tokenBlackList.contains(token)  && username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
+
+    public String extractTokenId(String token){
+        Claims claims = extractAllClaim(token);
+        return claims.getId();
+    }
+
+    public void addToBlackList(String token) {
+        tokenBlackList.add(token);
+    }
+
+    public Boolean isTokenBlackListed(String token) {
+        return tokenBlackList.contains(token);
+    }
+
+
 
 }
