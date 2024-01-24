@@ -6,11 +6,15 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.json.JSONObject;
+
 
 import java.security.Key;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 @Component
@@ -19,11 +23,14 @@ public class JwtService {
     @Autowired
     private UserDetails userDetails;
 
-    private Set<String> tokenBlackList = new HashSet<>();
+    private Set<String> tokenBlackList = ConcurrentHashMap.newKeySet();
+
 
     private static final String SECRET = "23131313dwdddddddddddwa222222222222232131231dedDADWW21";
 
     public String generateToken(String username){
+
+        System.out.println("Generated token for user: " + username);
         Map<String , Objects> claims = new HashMap<>();
       String token =  Jwts.builder()
                 .setClaims(claims)
@@ -33,7 +40,11 @@ public class JwtService {
                 .signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
 
       tokenBlackList.add(token);
-      return token;
+
+        JSONObject jsonResponse = new JSONObject();
+        jsonResponse.put("token", token);
+
+        return jsonResponse.toString();
     }
 
     private Key getSignKey(){
@@ -65,10 +76,11 @@ public class JwtService {
         return extractExpiration(token).before(new Date());
     }
 
-    public Boolean validateToken(String token , UserDetails userDetails){
+    public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
-        return !tokenBlackList.contains(token)  && username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        return !isTokenBlackListed(token) && username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
+
 
     public String extractTokenId(String token){
         Claims claims = extractAllClaim(token);
@@ -81,6 +93,17 @@ public class JwtService {
 
     public Boolean isTokenBlackListed(String token) {
         return tokenBlackList.contains(token);
+    }
+
+    @Scheduled(cron = "0 0 0 * * ?") // Menjalankan setiap hari pada pukul 00:00
+    public void cleanExpiredTokens() {
+        Iterator<String> iterator = tokenBlackList.iterator();
+        while (iterator.hasNext()) {
+            String token = iterator.next();
+            if (isTokenExpired(token)) {
+                iterator.remove(); // Hapus token yang sudah expired
+            }
+        }
     }
 
 

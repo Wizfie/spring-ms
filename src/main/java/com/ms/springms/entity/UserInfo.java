@@ -19,6 +19,7 @@
         private int id;
         private String username;
         private String nip;
+        private String email;
         private String password;
         private String role;
     }

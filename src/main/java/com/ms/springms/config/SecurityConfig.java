@@ -40,7 +40,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth-> auth
-                        .requestMatchers("/api/auth/welcome","/api/auth/getAll","/api/auth/logout", "/api/auth/addUser" , "/api/auth/login")
+                        .requestMatchers("/api/auth/currentUser","/api/auth/getAll","/api/auth/logout", "/api/auth/addUser" , "/api/auth/login")
                         .permitAll().anyRequest().authenticated())
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
